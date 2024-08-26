@@ -53,4 +53,5 @@ jobs:
           echo "url=${DEPLOYMENT_URL}" >> $GITHUB_OUTPUT
 
       - name: Output Deployment URL
-        run: echo "Deployment URL: ${{ steps.deploy.outputs.url }}"
+        run: |
+             echo "Deployment URL: ${{ steps.deploy.outputs.url }}"

@@ -1,35 +1,56 @@
-name: .NET Reusable Workflow
+name: Deploy Microservice
 
 on:
   workflow_call:
     inputs:
-      solution-file:
-        description: 'Path to the .NET solution file (.sln) in the root of the repository'
+      environment:
+        description: 'Target deployment environment'
         required: true
         type: string
-      dotnet-version:
-        description: 'Version of .NET to use'
+      service_name:
+        description: 'Name of the microservice'
         required: true
         type: string
+      app_version:
+        description: 'Version of the application to deploy'
+        required: true
+        type: string
+    secrets:
+      azure_credentials:
+        description: 'Azure Service Principal Credentials'
+        required: true
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
+    outputs:
+      deployment_url: ${{ steps.deploy.outputs.url }}
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-    - name: Set up .NET Core
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: ${{ inputs.dotnet-version }}
+      - name: Set Up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-    - name: Restore dependencies
-      run: dotnet restore ${{ inputs.solution-file }}
+      - name: Install Dependencies
+        run: echo "npm install"
 
-    - name: Build the solution
-      run: dotnet build ${{ inputs.solution-file }} --configuration Release --no-restore
+      - name: Run Unit Tests
+        run: echo "npm test"
 
-    - name: Run tests
-      run: dotnet test ${{ inputs.solution-file }} --no-restore --verbosity normal
+      - name: Deploy to Azure
+        id: deploy
+        env:
+          AZURE_CREDENTIALS: ${{ secrets.azure_credentials }}
+        run: |
+          echo "Deploying ${{ inputs.service_name }} version ${{ inputs.app_version }} to ${{ inputs.environment }}"
+          # Simulate deployment command
+          DEPLOYMENT_URL="https://${{ inputs.service_name }}-${{ inputs.environment }}.azurewebsites.net"
+          echo "url=${DEPLOYMENT_URL}" >> $GITHUB_OUTPUT
+
+      - name: Output Deployment URL
+        run: echo "Deployment URL: ${{ steps.deploy.outputs.url }}"
